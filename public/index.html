@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Ollie's Food Tracker</title>
   <meta name="description" content="Track Oliver's first foods: allergen introductions and 10–15 tries for every new flavor." />
-  <meta name="theme-color" content="#f7f3ec" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#1b1a17" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#182027" media="(prefers-color-scheme: dark)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Ollie Foods" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥕</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -23,7 +23,7 @@
         <p class="sub" id="age-line">Loading…</p>
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn" id="lock-btn" aria-label="Unlock editing" title="Unlock editing">🔒</button>
+        <span class="streak" id="streak" aria-live="polite">🔥 0</span>
         <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">⚙️</button>
       </div>
     </div>

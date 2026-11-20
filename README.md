@@ -9,16 +9,17 @@ A simple shared tracker for Oliver's first foods (8–18 months):
 
 ## How it works
 - Static front end in `public/` (vanilla JS, no build step). The food list lives in `public/foods.js`.
-- `api/data.js` is a Vercel Function. Anyone with the link can read the data with `GET`. Writes (`POST`) require the `x-family-pin` header to match the `FAMILY_PIN` env var.
+- `api/data.js` is a Vercel Function: `GET` reads the data, `POST` applies a change. There's no login or PIN, so anyone with the link can view and edit. Keep the URL within the family. `GET /api/data?health` checks that storage can be read and written.
+- The look is adapted from the "Kids Learning App" Figma community kit by Mohamed Talaat: teal primary, pastel tiles, Roboto.
 - Data is stored as one JSON document in a **private Vercel Blob** store (`lib/store.js`). Reads skip the cache (`useCache: false`) so they always return the latest write, and writes use ETag `ifMatch` so two simultaneous edits don't overwrite each other.
 
 ## Local dev
 ```bash
 npm install
-FAMILY_PIN=1234 npm run dev   # http://localhost:3000, data saved to .data/state.json
+npm run dev   # http://localhost:3000, data saved to .data/state.json
 ```
 
 ## Deploy
-Vercel project settings: Framework "Other", output directory `public`. Env vars: `FAMILY_PIN`, plus the Blob store connection (`BLOB_READ_WRITE_TOKEN`).
+Vercel project settings: Framework "Other", output directory `public`. Connect a **private** Vercel Blob store to the project. This sets `BLOB_STORE_ID`, which the app uses with Vercel's built-in credentials (a `BLOB_READ_WRITE_TOKEN` also works).
 
 _Not medical advice. Check with your pediatrician, especially if there's eczema or a known allergy._

@@ -9,7 +9,6 @@ let tab = 'home';
 let foodFilter = 'all';
 let foodSearch = '';
 let currentFoodId = null;
-const PIN_KEY = 'ollie-pin';
 const MAINTAIN_DAYS = 7;      // allergens not given within this many days get flagged
 const ALLERGEN_GAP_DAYS = 3;  // wait this long between NEW allergens
 
@@ -120,11 +119,8 @@ function weekLogs() {
 // ---------------------------------------------------------------- API
 async function api(method, body) {
   const headers = { 'content-type': 'application/json' };
-  const pin = store.get(PIN_KEY);
-  if (pin) headers['x-family-pin'] = pin;
   const res = await fetch('/api/data', { method, headers, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 401) { store.del(PIN_KEY); updateLock(); throw Object.assign(new Error('Wrong PIN'), { code: 401 }); }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
@@ -139,43 +135,13 @@ async function load() {
   render();
 }
 
-// Ensure we have a PIN before writing. Resolves true if unlocked.
-function requirePin() {
-  if (store.get(PIN_KEY)) return Promise.resolve(true);
-  return new Promise((resolve) => {
-    openSheet(`
-      <h2>Unlock editing</h2>
-      <p class="muted">Enter the family PIN to log foods. It's remembered on this device.</p>
-      <form class="form" id="pin-form">
-        <div class="field"><label for="pin">Family PIN</label>
-          <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*" required autofocus /></div>
-        <p class="small" id="pin-err" style="color:var(--danger)" hidden>That PIN didn't work.</p>
-        <button class="btn" type="submit">Unlock</button>
-      </form>`, () => resolve(!!store.get(PIN_KEY)));
-    $('#pin-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      store.set(PIN_KEY, $('#pin').value.trim());
-      try {
-        await api('POST', { op: 'verify' });
-        updateLock();
-        closeSheet();
-        toast('Unlocked ✓');
-      } catch {
-        $('#pin-err').hidden = false;
-      }
-    });
-  });
-}
-
 async function mutate(body, okMsg) {
-  if (!(await requirePin())) return false;
   try {
     state = await api('POST', body);
     render();
     if (okMsg) toast(okMsg);
     return true;
   } catch (e) {
-    if (e.code === 401) { toast('PIN needed', true); return mutate(body, okMsg); }
     toast(e.message, true);
     return false;
   }
@@ -210,17 +176,39 @@ function closeSheet() {
   if (onSheetClose) { const f = onSheetClose; onSheetClose = null; f(); }
 }
 
-function updateLock() {
-  const b = $('#lock-btn');
-  const unlocked = !!store.get(PIN_KEY);
-  b.textContent = unlocked ? '🔓' : '🔒';
-  b.classList.toggle('unlocked', unlocked);
-  b.title = unlocked ? 'Editing unlocked (tap to lock)' : 'Unlock editing';
-}
-
 function progressBar(tries, warn = false) {
   const pct = Math.min(100, Math.round((tries / TARGET_TRIES) * 100));
   return `<div class="bar${warn ? ' warn' : ''}" role="progressbar" aria-valuenow="${tries}" aria-valuemax="${TARGET_TRIES}"><i style="width:${pct}%"></i></div>`;
+}
+
+const CAT_ICON = {
+  Allergens: '🥜', Fruits: '🍓', Vegetables: '🥦', Proteins: '🍗', Legumes: '🫘',
+  Grains: '🌾', Dairy: '🧀', 'Herbs & Spices': '🌿', Other: '🥄',
+};
+// Per-food icons where a clear emoji exists; everything else falls back to its category icon.
+const FOOD_ICON = {
+  peanut: '🥜', egg: '🥚', yogurt: '🥣', 'wheat-cereal': '🍞', almond: '🌰', cashew: '🌰', walnut: '🌰',
+  hazelnut: '🌰', pistachio: '🌰', pecan: '🌰', salmon: '🐟', cod: '🐟', tuna: '🐟', sardines: '🐟',
+  shrimp: '🦐', crab: '🦀', sesame: '🫙',
+  banana: '🍌', avocado: '🥑', apple: '🍎', pear: '🍐', peach: '🍑', mango: '🥭', blueberry: '🫐',
+  strawberry: '🍓', blackberry: '🫐', watermelon: '🍉', cantaloupe: '🍈', kiwi: '🥝', orange: '🍊',
+  grapes: '🍇', cherry: '🍒', pineapple: '🍍', coconut: '🥥', lemon: '🍋',
+  'sweet-potato': '🍠', carrot: '🥕', butternut: '🎃', pumpkin: '🎃', peas: '🫛', broccoli: '🥦',
+  spinach: '🥬', kale: '🥬', cabbage: '🥬', 'bell-pepper': '🫑', tomato: '🍅', cucumber: '🥒',
+  corn: '🌽', potato: '🥔', eggplant: '🍆', mushroom: '🍄', onion: '🧅',
+  chicken: '🍗', turkey: '🍗', beef: '🥩', pork: '🍖', lamb: '🍖', edamame: '🫛',
+  rice: '🍚', pasta: '🍝', bread: '🍞', oats: '🥣', polenta: '🌽', buckwheat: '🥞',
+  cheddar: '🧀', mozzarella: '🧀', ricotta: '🧀', 'cream-cheese': '🧀', butter: '🧈', kefir: '🥛',
+  'cow-milk': '🥛', garlic: '🧄', ginger: '🫚', honey: '🍯', 'olive-oil': '🫒',
+};
+
+// Consecutive days (ending today, or yesterday if nothing logged yet today) with at least one tasting.
+function streakDays() {
+  const days = new Set(state.logs.map((l) => l.date));
+  let d = days.has(todayStr()) ? todayStr() : addDays(todayStr(), -1);
+  let n = 0;
+  while (days.has(d)) { n++; d = addDays(d, -1); }
+  return n;
 }
 
 function foodRow(f, extraMeta = '', { hideAllergen = false } = {}) {
@@ -232,7 +220,7 @@ function foodRow(f, extraMeta = '', { hideAllergen = false } = {}) {
     : `${i.tries}/${TARGET_TRIES} tries · last ${relDays(i.daysSinceLast)}${i.loved ? ` · ❤️ ${i.loved}` : ''}${i.refused ? ` · ✋ ${i.refused}` : ''}`;
   return `
     <div class="row">
-      <span class="dot" style="background:${COLORS[f.color] || 'var(--border)'}" aria-hidden="true"></span>
+      <span class="food-ico" style="--c:${COLORS[f.color] || 'var(--muted)'}" aria-hidden="true">${FOOD_ICON[f.id] || CAT_ICON[f.cat] || '🍽️'}</span>
       <button class="row-main" data-open="${esc(f.id)}">
         <span class="row-title">${esc(f.name)} <span class="pill ${i.status}">${STATUS_LABEL[i.status]}</span> ${al} ${age}</span>
         <span class="row-meta">${extraMeta || triesTxt}</span>
@@ -274,10 +262,10 @@ function renderHome() {
 
   return `
     <section class="stats">
-      <div class="stat"><div class="num">${tried}<small>/${foods.length}</small></div><div class="lbl">foods tried</div></div>
-      <div class="stat"><div class="num">${groupsIntro}<small>/9</small></div><div class="lbl">allergen groups introduced</div></div>
-      <div class="stat"><div class="num">${likes}</div><div class="lbl">foods he likes</div></div>
-      <div class="stat"><div class="num">${week.length}</div><div class="lbl">tastings this week</div></div>
+      <button class="stat t-purple" data-tab-go="foods"><span class="stat-ico" aria-hidden="true">🍽️</span><div class="num">${tried}<small>/${foods.length}</small></div><div class="lbl">foods tried</div></button>
+      <button class="stat t-orange" data-tab-go="allergens"><span class="stat-ico" aria-hidden="true">🥜</span><div class="num">${groupsIntro}<small>/9</small></div><div class="lbl">allergen groups</div></button>
+      <button class="stat t-green" data-tab-go="foods"><span class="stat-ico" aria-hidden="true">💚</span><div class="num">${likes}</div><div class="lbl">foods he likes</div></button>
+      <button class="stat t-blue" data-tab-go="history"><span class="stat-ico" aria-hidden="true">📅</span><div class="num">${week.length}</div><div class="lbl">tastings this week</div></button>
     </section>
 
     ${reactions.length ? `<div class="callout danger">⚠️ <b>Reaction flagged:</b> ${reactions.map((x) => `<a href="#" data-open="${esc(x.f.id)}">${esc(x.f.name)}</a> (${STATUS_LABEL[x.i.status]})`).join(', ')}. Check with your pediatrician before offering again.</div>` : ''}
@@ -286,7 +274,7 @@ function renderHome() {
       <div class="card-head"><h2>Allergens</h2><button class="chip" data-tab-go="allergens">See all</button></div>
       <div style="display:grid;gap:8px">
         ${next ? (next.ready
-          ? `<div class="callout info">👉 <b>Next new allergen:</b> ${esc(next.food.name)}. ${esc(next.food.tip)}<div style="margin-top:8px"><button class="chip on" data-log="${esc(next.food.id)}">Log first taste</button></div></div>`
+          ? `<div class="banner"><span class="banner-kicker">Next new allergen</span><span class="banner-title">${esc(next.food.name)}</span><span class="banner-text">${esc(next.food.tip)}</span><button class="banner-btn" data-log="${esc(next.food.id)}">Log first taste</button></div>`
           : `<div class="callout info">⏳ Last new allergen was introduced recently. Wait until <b>${fmtDate(next.waitUntil)}</b> before starting <b>${esc(next.food.name)}</b>. Keep giving the ones he's already had.</div>`)
           : `<div class="callout ok">🎉 Every allergen on the list has been introduced. Keep them in rotation.</div>`}
         ${overdue.length
@@ -334,7 +322,7 @@ function renderFoods() {
       <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
   }).join('');
   return `
-    <input class="search" id="food-search" type="search" placeholder="Search foods…" value="${esc(foodSearch)}" aria-label="Search foods" />
+    <label class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="search" placeholder="Search foods…" value="${esc(foodSearch)}" aria-label="Search foods" /></label>
     <div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>
     ${body || '<div class="card empty">No foods match.</div>'}`;
 }
@@ -396,6 +384,9 @@ function render() {
   const name = state.settings.childName || 'Oliver';
   $('#title').textContent = `${name}'s Food Tracker`;
   $('#age-line').textContent = a ? `${a.months} mo ${a.days} d · ${stageLabel(a.months)}` : 'Set his birthday in Settings';
+  const streak = streakDays();
+  $('#streak').textContent = `🔥 ${streak}`;
+  $('#streak').title = `${streak}-day logging streak`;
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   const view = { home: renderHome, foods: renderFoods, allergens: renderAllergens, history: renderHistory, guide: renderGuide }[tab];
   $('#view').innerHTML = (state.storageMissing
@@ -526,7 +517,6 @@ function openSettings() {
       <h3>This device</h3>
       <div class="btn-row">
         <button class="btn secondary" id="export-btn">Export data (JSON)</button>
-        ${store.get(PIN_KEY) ? '<button class="btn secondary" id="lock-now">Lock editing</button>' : ''}
       </div>
     </div>`);
 
@@ -551,7 +541,6 @@ function openSettings() {
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `ollie-foods-${todayStr()}.json` });
     a.click(); URL.revokeObjectURL(a.href);
   });
-  $('#lock-now')?.addEventListener('click', () => { store.del(PIN_KEY); updateLock(); closeSheet(); toast('Locked'); });
 }
 
 // ---------------------------------------------------------------- events
@@ -587,10 +576,6 @@ $('#sheet-close').addEventListener('click', closeSheet);
 $('#sheet-backdrop').addEventListener('click', closeSheet);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
 $('#settings-btn').addEventListener('click', () => state && openSettings());
-$('#lock-btn').addEventListener('click', () => {
-  if (store.get(PIN_KEY)) { store.del(PIN_KEY); updateLock(); toast('Locked'); }
-  else requirePin();
-});
 
 // Refresh when coming back to the app so both parents see the latest entries.
 document.addEventListener('visibilitychange', async () => {
@@ -599,5 +584,4 @@ document.addEventListener('visibilitychange', async () => {
   }
 });
 
-updateLock();
 load();

@@ -1,7 +1,7 @@
-// GET  /api/data            -> full tracker state (read-only, no PIN needed)
-// POST /api/data {op, ...}  -> apply one change (requires header x-family-pin)
+// GET  /api/data            -> full tracker state
+// GET  /api/data?health     -> storage read/write self-test
+// POST /api/data {op, ...}  -> apply one change (open to anyone with the link, by request)
 
-import { timingSafeEqual } from 'node:crypto';
 import { readState, updateState, healthCheck } from '../lib/store.js';
 
 const json = (body, status = 200) =>
@@ -9,14 +9,6 @@ const json = (body, status = 200) =>
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
   });
-
-function pinOk(given) {
-  const expected = process.env.FAMILY_PIN || '';
-  if (!expected || typeof given !== 'string') return false;
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 const str = (v, max = 500) => (typeof v === 'string' ? v.slice(0, max) : '');
 const id = (v) => str(v, 80).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -40,7 +32,6 @@ function cleanLog(l = {}) {
 }
 
 const OPS = {
-  verify: () => {},
   addLog: (s, b) => {
     const log = cleanLog(b.log);
     if (!log.foodId) throw new Error('foodId required');
@@ -98,14 +89,9 @@ export default {
       }
       if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
-      if (!pinOk(request.headers.get('x-family-pin'))) {
-        await new Promise((r) => setTimeout(r, 800)); // slow down guessing
-        return json({ error: 'Wrong PIN' }, 401);
-      }
       const body = await request.json().catch(() => ({}));
       const op = OPS[body.op];
       if (!op) return json({ error: 'Unknown op' }, 400);
-      if (body.op === 'verify') return json({ ok: true });
 
       const state = await updateState((s) => op(s, body));
       return json(state);
