@@ -398,7 +398,9 @@ function render() {
   $('#age-line').textContent = a ? `${a.months} mo ${a.days} d · ${stageLabel(a.months)}` : 'Set his birthday in Settings';
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   const view = { home: renderHome, foods: renderFoods, allergens: renderAllergens, history: renderHistory, guide: renderGuide }[tab];
-  $('#view').innerHTML = view();
+  $('#view').innerHTML = (state.storageMissing
+    ? '<div class="callout danger">⚙️ <b>Setup not finished:</b> the data store isn\'t connected yet, so tastings can\'t be saved. (Vercel → Storage → create a private Blob store → connect to this project → redeploy.)</div>'
+    : '') + view();
   if (tab === 'foods') {
     const s = $('#food-search');
     s.addEventListener('input', () => { foodSearch = s.value; const pos = s.selectionStart; render(); const n = $('#food-search'); n.focus(); n.setSelectionRange(pos, pos); });
