@@ -9,6 +9,7 @@ let tab = 'home';
 let foodFilter = 'all';
 let foodSearch = '';
 let currentFoodId = null;
+let foodCat = null; // category open on the Foods tab (null = tile grid)
 const MAINTAIN_DAYS = 7;      // allergens not given within this many days get flagged
 const ALLERGEN_GAP_DAYS = 3;  // wait this long between NEW allergens
 
@@ -196,6 +197,8 @@ const FOOD_ICON = {
   'sweet-potato': '🍠', carrot: '🥕', butternut: '🎃', pumpkin: '🎃', peas: '🫛', broccoli: '🥦',
   spinach: '🥬', kale: '🥬', cabbage: '🥬', 'bell-pepper': '🫑', tomato: '🍅', cucumber: '🥒',
   corn: '🌽', potato: '🥔', eggplant: '🍆', mushroom: '🍄', onion: '🧅',
+  zucchini: '🥒', 'green-beans': '🫛', asparagus: '🌱', okra: '🌱', artichoke: '🌱', celery: '🥬',
+  parsnip: '🥕', cauliflower: '🤍', brussels: '🥬', beet: '🟣',
   chicken: '🍗', turkey: '🍗', beef: '🥩', pork: '🍖', lamb: '🍖', edamame: '🫛',
   rice: '🍚', pasta: '🍝', bread: '🍞', oats: '🥣', polenta: '🌽', buckwheat: '🥞',
   cheddar: '🧀', mozzarella: '🧀', ricotta: '🧀', 'cream-cheese': '🧀', butter: '🧈', kefir: '🥛',
@@ -314,17 +317,69 @@ function renderFoods() {
     return i.status === foodFilter;
   });
   const cats = [...CATEGORIES, ...new Set(allFoods().map((f) => f.cat).filter((c) => !CATEGORIES.includes(c)))];
-  const body = cats.map((c) => {
-    const rows = items.filter((x) => x.f.cat === c);
-    if (!rows.length) return '';
-    const done = rows.filter((x) => x.i.tries > 0).length;
-    return `<section class="card"><div class="card-head"><h2>${esc(c)}</h2><span class="muted small">${done}/${rows.length} tried</span></div>
-      <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
+  // Tried foods first (as requested), keeping the list's natural order within each group.
+  const triedFirst = (rows) => [...rows.filter((x) => x.i.tries > 0), ...rows.filter((x) => x.i.tries === 0)];
+  const searchBar = `<label class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" /></label>`;
+  const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
+
+  // 1) One category open: just that category's foods.
+  if (foodCat && !q) {
+    const all = allFoods().filter((f) => f.cat === foodCat).map((f) => ({ f, i: foodInfo(f) }));
+    const done = all.filter((x) => x.i.tries > 0).length;
+    const rows = triedFirst(items.filter((x) => x.f.cat === foodCat));
+    return `
+      <div class="cat-head">
+        <button class="back-btn" data-cat="" aria-label="Back to all categories">‹ All</button>
+        <span class="cat-head-ico" aria-hidden="true">${CAT_ICON[foodCat] || '🍽️'}</span>
+        <div class="cat-head-text"><h2>${esc(foodCat)}</h2><span class="muted small">${done} of ${all.length} tried</span></div>
+      </div>
+      ${progressLine(done, all.length)}
+      ${chips}
+      <section class="card">${rows.length ? `<div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div>` : '<p class="empty">No foods match this filter here.</p>'}</section>`;
+  }
+
+  // 2) Searching or filtering: matching foods across all categories, grouped.
+  if (q || foodFilter !== 'all') {
+    const body = cats.map((c) => {
+      const rows = triedFirst(items.filter((x) => x.f.cat === c));
+      if (!rows.length) return '';
+      return `<section class="card"><div class="card-head"><h2>${CAT_ICON[c] || ''} ${esc(c)}</h2><span class="muted small">${rows.length} match${rows.length > 1 ? 'es' : ''}</span></div>
+        <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
+    }).join('');
+    return `${searchBar}${chips}${body || '<div class="card empty">No foods match.</div>'}`;
+  }
+
+  // 3) Default: category tiles (kit's category grid) with progress.
+  const total = allFoods().length;
+  const triedAll = allFoods().filter((f) => foodInfo(f).tries > 0).length;
+  const tiles = cats.map((c, idx) => {
+    const fs = allFoods().filter((f) => f.cat === c);
+    if (!fs.length) return '';
+    const done = fs.filter((f) => foodInfo(f).tries > 0).length;
+    const tone = CAT_TONE[c] || TONES[idx % TONES.length];
+    const complete = done === fs.length;
+    return `<button class="cat-tile t-${tone}${complete ? ' complete' : ''}" data-cat="${esc(c)}">
+      <span class="cat-ico" aria-hidden="true">${CAT_ICON[c] || '🍽️'}</span>
+      <span class="cat-name">${esc(c)}</span>
+      <span class="cat-count">${complete ? '✓ All ' + fs.length + ' tried' : `${done} of ${fs.length} tried`}</span>
+      <span class="cat-bar"><i style="width:${Math.round((done / fs.length) * 100)}%"></i></span>
+    </button>`;
   }).join('');
   return `
-    <label class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="search" placeholder="Search foods…" value="${esc(foodSearch)}" aria-label="Search foods" /></label>
-    <div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>
-    ${body || '<div class="card empty">No foods match.</div>'}`;
+    ${searchBar}
+    ${chips}
+    <div class="overall"><span><b>${triedAll}</b> of ${total} foods tried</span>${progressLine(triedAll, total)}</div>
+    <div class="cat-grid">${tiles}</div>`;
+}
+
+const TONES = ['orange', 'green', 'purple', 'blue', 'yellow'];
+const CAT_TONE = {
+  Allergens: 'orange', Fruits: 'red', Vegetables: 'green', Proteins: 'yellow', Legumes: 'purple',
+  Grains: 'yellow', Dairy: 'blue', 'Herbs & Spices': 'green', Other: 'purple',
+};
+function progressLine(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  return `<div class="bar wide" role="progressbar" aria-valuenow="${done}" aria-valuemax="${total}"><i style="width:${pct}%"></i></div>`;
 }
 
 function renderAllergens() {
@@ -393,8 +448,8 @@ function render() {
     ? '<div class="callout danger">⚙️ <b>Setup not finished:</b> the data store isn\'t connected yet, so tastings can\'t be saved. (Vercel → Storage → create a private Blob store → connect to this project → redeploy.)</div>'
     : '') + view();
   if (tab === 'foods') {
-    const s = $('#food-search');
-    s.addEventListener('input', () => { foodSearch = s.value; const pos = s.selectionStart; render(); const n = $('#food-search'); n.focus(); n.setSelectionRange(pos, pos); });
+    const s = $('#food-search'); // not present inside an open category
+    s?.addEventListener('input', () => { foodSearch = s.value; const pos = s.selectionStart; render(); const n = $('#food-search'); n?.focus(); n?.setSelectionRange(pos, pos); });
   }
 }
 
@@ -545,10 +600,16 @@ function openSettings() {
 
 // ---------------------------------------------------------------- events
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-tab],[data-tab-go],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
+  const t = e.target.closest('[data-tab],[data-tab-go],[data-cat],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
   if (!t) return;
   if (t.dataset.tab || t.dataset.tabGo) {
-    tab = t.dataset.tab || t.dataset.tabGo; render(); window.scrollTo({ top: 0 }); return;
+    const next = t.dataset.tab || t.dataset.tabGo;
+    // Tapping the Foods tab again (or arriving from Home) returns to the category tiles.
+    if (next === 'foods') { foodCat = null; foodFilter = 'all'; }
+    tab = next; render(); window.scrollTo({ top: 0 }); return;
+  }
+  if ('cat' in t.dataset) {
+    foodCat = t.dataset.cat || null; foodFilter = 'all'; render(); window.scrollTo({ top: 0 }); return;
   }
   if (t.dataset.open) { e.preventDefault(); openFood(t.dataset.open); return; }
   if (t.dataset.log) { openFood(t.dataset.log, true); return; }
