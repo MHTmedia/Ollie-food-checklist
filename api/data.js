@@ -2,7 +2,7 @@
 // POST /api/data {op, ...}  -> apply one change (requires header x-family-pin)
 
 import { timingSafeEqual } from 'node:crypto';
-import { readState, updateState } from '../lib/store.js';
+import { readState, updateState, healthCheck } from '../lib/store.js';
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -92,6 +92,7 @@ export default {
   async fetch(request) {
     try {
       if (request.method === 'GET') {
+        if (new URL(request.url).searchParams.has('health')) return json(await healthCheck());
         const { state } = await readState();
         return json(state);
       }
