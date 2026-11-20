@@ -322,54 +322,42 @@ function renderFoods() {
   const searchBar = `<label class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" /></label>`;
   const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
 
-  // 1) One category open: just that category's foods.
-  if (foodCat && !q) {
-    const all = allFoods().filter((f) => f.cat === foodCat).map((f) => ({ f, i: foodInfo(f) }));
-    const done = all.filter((x) => x.i.tries > 0).length;
-    const rows = triedFirst(items.filter((x) => x.f.cat === foodCat));
-    return `
-      <div class="cat-head">
-        <button class="back-btn" data-cat="" aria-label="Back to all categories">‹ All</button>
-        <span class="cat-head-ico" aria-hidden="true">${CAT_ICON[foodCat] || '🍽️'}</span>
-        <div class="cat-head-text"><h2>${esc(foodCat)}</h2><span class="muted small">${done} of ${all.length} tried</span></div>
-      </div>
-      ${progressLine(done, all.length)}
-      ${chips}
-      <section class="card">${rows.length ? `<div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div>` : '<p class="empty">No foods match this filter here.</p>'}</section>`;
-  }
-
-  // 2) Searching or filtering: matching foods across all categories, grouped.
-  if (q || foodFilter !== 'all') {
-    const body = cats.map((c) => {
-      const rows = triedFirst(items.filter((x) => x.f.cat === c));
-      if (!rows.length) return '';
-      return `<section class="card"><div class="card-head"><h2>${CAT_ICON[c] || ''} ${esc(c)}</h2><span class="muted small">${rows.length} match${rows.length > 1 ? 'es' : ''}</span></div>
-        <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
-    }).join('');
-    return `${searchBar}${chips}${body || '<div class="card empty">No foods match.</div>'}`;
-  }
-
-  // 3) Default: category tiles (kit's category grid) with progress.
+  // Category filter row (pastel mini tiles with progress). Combines with the status chips and search.
+  const tried = (f) => foodInfo(f).tries > 0;
   const total = allFoods().length;
-  const triedAll = allFoods().filter((f) => foodInfo(f).tries > 0).length;
-  const tiles = cats.map((c, idx) => {
-    const fs = allFoods().filter((f) => f.cat === c);
-    if (!fs.length) return '';
-    const done = fs.filter((f) => foodInfo(f).tries > 0).length;
-    const tone = CAT_TONE[c] || TONES[idx % TONES.length];
-    const complete = done === fs.length;
-    return `<button class="cat-tile t-${tone}${complete ? ' complete' : ''}" data-cat="${esc(c)}">
-      <span class="cat-ico" aria-hidden="true">${CAT_ICON[c] || '🍽️'}</span>
-      <span class="cat-name">${esc(c)}</span>
-      <span class="cat-count">${complete ? '✓ All ' + fs.length + ' tried' : `${done} of ${fs.length} tried`}</span>
-      <span class="cat-bar"><i style="width:${Math.round((done / fs.length) * 100)}%"></i></span>
+  const triedAll = allFoods().filter(tried).length;
+  const catChip = (key, label, icon, done, n, tone) => `
+    <button class="cat-chip t-${tone}${(foodCat || '') === key ? ' on' : ''}" data-cat="${esc(key)}" aria-pressed="${(foodCat || '') === key}">
+      <span class="cc-ico" aria-hidden="true">${icon}</span>
+      <span class="cc-text"><span class="cc-name">${esc(label)}</span><span class="cc-count">${done}/${n} tried</span></span>
+      <span class="cat-bar"><i style="width:${n ? Math.round((done / n) * 100) : 0}%"></i></span>
     </button>`;
+  const catRow = `<div class="cat-row" role="group" aria-label="Filter by category">
+    ${catChip('', 'All foods', '🍽️', triedAll, total, 'blue')}
+    ${cats.map((c, idx) => {
+      const fs = allFoods().filter((f) => f.cat === c);
+      return fs.length ? catChip(c, c, CAT_ICON[c] || '🍽️', fs.filter(tried).length, fs.length, CAT_TONE[c] || TONES[idx % TONES.length]) : '';
+    }).join('')}
+  </div>`;
+
+  // All foods, grouped by category (narrowed by category / status / search). Tried foods first.
+  const shown = foodCat ? [foodCat] : cats;
+  const body = shown.map((c) => {
+    const rows = triedFirst(items.filter((x) => x.f.cat === c));
+    if (!rows.length) return '';
+    const fs = allFoods().filter((f) => f.cat === c);
+    const done = fs.filter(tried).length;
+    const narrowed = q || foodFilter !== 'all';
+    return `<section class="card"><div class="card-head"><h2>${CAT_ICON[c] || ''} ${esc(c)}</h2>
+        <span class="muted small">${narrowed ? `${rows.length} shown · ` : ''}${done} of ${fs.length} tried</span></div>
+      <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
   }).join('');
+
   return `
     ${searchBar}
+    ${catRow}
     ${chips}
-    <div class="overall"><span><b>${triedAll}</b> of ${total} foods tried</span>${progressLine(triedAll, total)}</div>
-    <div class="cat-grid">${tiles}</div>`;
+    ${body || '<div class="card empty">No foods match these filters.</div>'}`;
 }
 
 const TONES = ['orange', 'green', 'purple', 'blue', 'yellow'];
@@ -444,11 +432,20 @@ function render() {
   $('#streak').title = `${streak}-day logging streak`;
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   const view = { home: renderHome, foods: renderFoods, allergens: renderAllergens, history: renderHistory, guide: renderGuide }[tab];
+  const rowX = $('.cat-row')?.scrollLeft || 0; // keep the category row where the user swiped it
   $('#view').innerHTML = (state.storageMissing
     ? '<div class="callout danger">⚙️ <b>Setup not finished:</b> the data store isn\'t connected yet, so tastings can\'t be saved. (Vercel → Storage → create a private Blob store → connect to this project → redeploy.)</div>'
     : '') + view();
   if (tab === 'foods') {
-    const s = $('#food-search'); // not present inside an open category
+    const row = $('.cat-row');
+    if (row) {
+      row.scrollLeft = rowX;
+      const on = row.querySelector('.cat-chip.on');
+      if (on && (on.offsetLeft < row.scrollLeft || on.offsetLeft + on.offsetWidth > row.scrollLeft + row.clientWidth)) {
+        row.scrollLeft = on.offsetLeft - 16;
+      }
+    }
+    const s = $('#food-search');
     s?.addEventListener('input', () => { foodSearch = s.value; const pos = s.selectionStart; render(); const n = $('#food-search'); n?.focus(); n?.setSelectionRange(pos, pos); });
   }
 }
@@ -604,12 +601,16 @@ document.addEventListener('click', async (e) => {
   if (!t) return;
   if (t.dataset.tab || t.dataset.tabGo) {
     const next = t.dataset.tab || t.dataset.tabGo;
-    // Tapping the Foods tab again (or arriving from Home) returns to the category tiles.
-    if (next === 'foods') { foodCat = null; foodFilter = 'all'; }
     tab = next; render(); window.scrollTo({ top: 0 }); return;
   }
   if ('cat' in t.dataset) {
-    foodCat = t.dataset.cat || null; foodFilter = 'all'; render(); window.scrollTo({ top: 0 }); return;
+    // Category combines with the status filter; tapping the active category again clears it.
+    const c = t.dataset.cat || null;
+    foodCat = foodCat === c ? null : c;
+    const y = window.scrollY;
+    render();
+    window.scrollTo(0, y);
+    return;
   }
   if (t.dataset.open) { e.preventDefault(); openFood(t.dataset.open); return; }
   if (t.dataset.log) { openFood(t.dataset.log, true); return; }
