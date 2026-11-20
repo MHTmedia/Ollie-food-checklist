@@ -1,0 +1,16 @@
+{
+  "name": "ollie-food-checklist",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Oliver's first-foods tracker: allergen introduction + palate exposure checklist (8-18 months)",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

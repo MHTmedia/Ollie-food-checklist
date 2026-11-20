@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Ollie's Food Tracker</title>
+  <meta name="description" content="Track Oliver's first foods: allergen introductions and 10–15 tries for every new flavor." />
+  <meta name="theme-color" content="#f7f3ec" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1b1a17" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Ollie Foods" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥕</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1 id="title">Ollie's Food Tracker</h1>
+        <p class="sub" id="age-line">Loading…</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="lock-btn" aria-label="Unlock editing" title="Unlock editing">🔒</button>
+        <button class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">⚙️</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="home" class="active">Home</button>
+      <button role="tab" data-tab="foods">Foods</button>
+      <button role="tab" data-tab="allergens">Allergens</button>
+      <button role="tab" data-tab="history">History</button>
+      <button role="tab" data-tab="guide">Guide</button>
+    </nav>
+  </header>
+
+  <main id="view" class="container" aria-live="polite"></main>
+
+  <!-- Bottom sheet / modal -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" hidden>
+    <button class="sheet-close icon-btn" id="sheet-close" aria-label="Close">✕</button>
+    <div id="sheet-body"></div>
+  </section>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
