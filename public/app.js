@@ -219,7 +219,7 @@ function foodRow(f, extraMeta = '', { hideAllergen = false } = {}) {
   const triesTxt = i.tries === 0 ? 'Not offered yet'
     : `${i.tries}/${TARGET_TRIES} tries · last ${relDays(i.daysSinceLast)}${i.loved ? ` · ❤️ ${i.loved}` : ''}${i.refused ? ` · ✋ ${i.refused}` : ''}`;
   return `
-    <div class="row">
+    <div class="row${i.tries > 0 ? ' tried' : ''}">
       <span class="food-ico" style="--c:${COLORS[f.color] || 'var(--muted)'}" aria-hidden="true">${FOOD_ICON[f.id] || CAT_ICON[f.cat] || '🍽️'}</span>
       <button class="row-main" data-open="${esc(f.id)}">
         <span class="row-title">${esc(f.name)} <span class="pill ${i.status}">${STATUS_LABEL[i.status]}</span> ${al} ${age}</span>

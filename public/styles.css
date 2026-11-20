@@ -162,6 +162,19 @@ h3 { font-size: 1rem; font-weight: 700; }
   flex: none; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; font-size: 1.45rem;
   background: color-mix(in srgb, var(--c) 16%, var(--surface));
 }
+/* Tried at least once: kit "Amazing!" green, with a check badge on the icon */
+.row.tried {
+  background: var(--ok-soft); border-radius: 18px; border-bottom-color: transparent;
+  margin: 3px -8px; padding: 10px 8px;
+}
+.row.tried + .row:not(.tried) { border-top: 0; }
+.food-ico { position: relative; }
+.row.tried .food-ico { background: var(--surface); }
+.row.tried .food-ico::after {
+  content: '✓'; position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--green); color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
 .row-main { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; display: grid; gap: 4px; }
 .row-title { font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .row-meta { font-size: .84rem; color: var(--faint); }
