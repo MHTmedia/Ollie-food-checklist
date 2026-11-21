@@ -275,7 +275,14 @@ h3 { font-size: 1rem; font-weight: 700; }
 
 .allergen-group { display: grid; gap: 4px; scroll-margin-top: 140px; }
 .pill.big9 { background: var(--tile-orange); color: var(--orange); font-size: .66rem; }
-.big9-note { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; margin: 6px 0 4px; font-size: .87rem; color: var(--text-2); display: grid; gap: 4px; }
+.big9-more > summary {
+  list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  color: var(--teal-ink); font-size: .85rem; font-weight: 500; padding: 4px 0;
+}
+.big9-more > summary::-webkit-details-marker { display: none; }
+.big9-more > summary::after { content: '▸'; font-size: .75rem; transition: transform .15s; }
+.big9-more[open] > summary::after { transform: rotate(90deg); }
+.big9-note { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; margin: 4px 0 4px; font-size: .87rem; color: var(--text-2); display: grid; gap: 4px; }
 .big9-note p { margin: 0; }
 .big9-note b { color: var(--text); font-weight: 500; }
 .big9-count { color: var(--text-2); font-size: .92rem; }

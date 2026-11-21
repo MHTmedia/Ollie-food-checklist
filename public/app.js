@@ -388,11 +388,14 @@ function renderAllergens() {
       const meta = ALLERGENS[g.key] || {};
       return `<section class="card allergen-group" id="big9-${g.key}">
         <div class="allergen-head"><h3><span aria-hidden="true">${g.icon}</span> ${esc(g.label)} <span class="pill big9">Big 9 · #${n + 1}</span></h3>${pill}</div>
-        ${meta.why ? `<div class="big9-note">
-          <p>${esc(meta.why)}</p>
-          <p><b>Hides in:</b> ${esc(meta.hidden)}</p>
-          <p><b>Easy first try:</b> ${esc(meta.start)}</p>
-        </div>` : ''}
+        ${meta.why ? `<details class="big9-more">
+          <summary>ⓘ About ${esc(g.label.split(' (')[0].toLowerCase())}</summary>
+          <div class="big9-note">
+            <p>${esc(meta.why)}</p>
+            <p><b>Hides in:</b> ${esc(meta.hidden)}</p>
+            <p><b>Easy first try:</b> ${esc(meta.start)}</p>
+          </div>
+        </details>` : ''}
         <div class="list">${g.members.map((x) => foodRow(x.f, x.i.first
           ? `First: ${fmtDate(x.i.first.date)} · ${x.i.tries} total · last ${relDays(x.i.daysSinceLast)}`
           : '', { hideAllergen: true })).join('')}</div>
