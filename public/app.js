@@ -327,13 +327,11 @@ function renderFoods() {
     return i.status === foodFilter;
   });
   const cats = [...CATEGORIES, ...new Set(allFoods().map((f) => f.cat).filter((c) => !CATEGORIES.includes(c)))];
-  // Tried foods first (as requested), keeping the list's natural order within each group.
-  // Tried first, then available-to-try, then not-yet-age-appropriate (grayed) at the bottom.
-  const isLocked = (x) => x.i.tries === 0 && !ageOk(x.f);
+  // Foods he has tried sit at the top; each group is alphabetical (A–Z by name).
+  const byName = (a, b) => a.f.name.localeCompare(b.f.name, undefined, { sensitivity: 'base' });
   const triedFirst = (rows) => [
-    ...rows.filter((x) => x.i.tries > 0),
-    ...rows.filter((x) => x.i.tries === 0 && !isLocked(x)),
-    ...rows.filter(isLocked),
+    ...rows.filter((x) => x.i.tries > 0).sort(byName),
+    ...rows.filter((x) => x.i.tries === 0).sort(byName),
   ];
   const searchBar = `<div class="search-row"><div class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="text" enterkeyhint="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" />${foodSearch ? '<button class="search-clear" data-clear-search aria-label="Clear search">✕</button>' : ''}</div><button class="add-food-btn" data-add-food="" aria-label="Add your own food">＋ <span>Add food</span></button></div>`;
   const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
