@@ -273,6 +273,18 @@ h3 { font-size: 1rem; font-weight: 700; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom)); background: var(--green); color: #fff; padding: 11px 18px; border-radius: 16px; font-weight: 500; z-index: 40; box-shadow: var(--shadow); max-width: calc(100vw - 32px); text-align: center; }
 .toast.error { background: var(--red); }
 
-.allergen-group { display: grid; gap: 4px; }
+.allergen-group { display: grid; gap: 4px; scroll-margin-top: 140px; }
+.pill.big9 { background: var(--tile-orange); color: var(--orange); font-size: .66rem; }
+.big9-note { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; margin: 6px 0 4px; font-size: .87rem; color: var(--text-2); display: grid; gap: 4px; }
+.big9-note p { margin: 0; }
+.big9-note b { color: var(--text); font-weight: 500; }
+.big9-count { color: var(--text-2); font-size: .92rem; }
+.big9-count b { color: var(--green); font-size: 1.1rem; }
+.big9-strip { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; }
+.big9-dot { display: grid; justify-items: center; gap: 2px; text-decoration: none; padding: 6px 0 4px; border-radius: 12px; background: var(--surface-2); opacity: .55; }
+.big9-dot span { font-size: 1.2rem; line-height: 1; }
+.big9-dot small { font-size: .65rem; color: var(--text-2); font-weight: 700; }
+.big9-dot.done { background: var(--ok-soft); opacity: 1; box-shadow: inset 0 0 0 1.5px var(--green); }
+.big9-dot.flag { background: var(--tile-red); opacity: 1; box-shadow: inset 0 0 0 1.5px var(--red); }
 .allergen-head { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .allergen-head h3 { display: flex; gap: 8px; align-items: center; }

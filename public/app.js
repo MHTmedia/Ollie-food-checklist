@@ -370,17 +370,29 @@ function progressLine(done, total) {
 function renderAllergens() {
   const { groups } = allergenSummary();
   const next = nextAllergen();
+  const introduced = groups.filter((g) => g.introduced).length;
   return `
+    <section class="card big9-head">
+      <div class="card-head" style="margin-bottom:6px"><h2>The Big 9 allergens</h2><span class="big9-count"><b>${introduced}</b> of 9 introduced</span></div>
+      <p class="muted small" style="margin:0 0 10px">These 9 foods cause most food allergies. Introducing them early and keeping them in his diet lowers the risk of an allergy.</p>
+      <div class="big9-strip">${groups.map((g, n) => `<a href="#big9-${g.key}" class="big9-dot ${g.reaction ? 'flag' : g.introduced ? 'done' : ''}" title="${esc(g.label)}"><span>${g.icon}</span><small>${n + 1}</small></a>`).join('')}</div>
+    </section>
     <div class="callout info">Introduce one new allergen every ${ALLERGEN_GAP_DAYS}+ days, then keep each one in his diet a few times a week. Groups not given in ${MAINTAIN_DAYS}+ days are flagged.
       ${next ? (next.ready ? `<br><b>Next up:</b> ${esc(next.food.name)}` : `<br><b>Next up:</b> ${esc(next.food.name)} on or after ${fmtDate(next.waitUntil)}`) : ''}</div>
-    ${groups.map((g) => {
+    ${groups.map((g, n) => {
       let pill;
       if (g.reaction) pill = '<span class="pill avoid">Reaction</span>';
       else if (!g.introduced) pill = '<span class="pill new">Not introduced</span>';
       else if (g.daysSince > MAINTAIN_DAYS) pill = `<span class="pill overdue">Due · ${g.daysSince}d ago</span>`;
       else pill = `<span class="pill likes">✓ ${relDays(g.daysSince)}</span>`;
-      return `<section class="card allergen-group">
-        <div class="allergen-head"><h3><span aria-hidden="true">${g.icon}</span> ${esc(g.label)}</h3>${pill}</div>
+      const meta = ALLERGENS[g.key] || {};
+      return `<section class="card allergen-group" id="big9-${g.key}">
+        <div class="allergen-head"><h3><span aria-hidden="true">${g.icon}</span> ${esc(g.label)} <span class="pill big9">Big 9 · #${n + 1}</span></h3>${pill}</div>
+        ${meta.why ? `<div class="big9-note">
+          <p>${esc(meta.why)}</p>
+          <p><b>Hides in:</b> ${esc(meta.hidden)}</p>
+          <p><b>Easy first try:</b> ${esc(meta.start)}</p>
+        </div>` : ''}
         <div class="list">${g.members.map((x) => foodRow(x.f, x.i.first
           ? `First: ${fmtDate(x.i.first.date)} · ${x.i.tries} total · last ${relDays(x.i.daysSinceLast)}`
           : '', { hideAllergen: true })).join('')}</div>
