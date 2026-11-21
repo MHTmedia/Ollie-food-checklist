@@ -189,7 +189,7 @@ h3 { font-size: 1rem; font-weight: 700; }
 .serve-age b { font-size: .88rem; color: var(--text); }
 .serve-age small { font-size: .7rem; color: var(--muted); }
 .now-tag { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--teal); color: #fff; border-radius: 999px; padding: 2px 7px; margin-bottom: 3px; }
-.plate-svg { width: 92px; max-width: 100%; height: auto; display: block; }
+.plate-svg { width: 100px; max-width: 100%; height: auto; display: block; overflow: visible; }
 .plate-svg .plate { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
 .serve-stop.now .plate-svg .plate { fill: #fff; }
 .plate-svg .plate-rim { fill: none; stroke: color-mix(in srgb, var(--c) 18%, var(--border)); stroke-width: 1; }
