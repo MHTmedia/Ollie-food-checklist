@@ -319,7 +319,7 @@ function renderFoods() {
   const cats = [...CATEGORIES, ...new Set(allFoods().map((f) => f.cat).filter((c) => !CATEGORIES.includes(c)))];
   // Tried foods first (as requested), keeping the list's natural order within each group.
   const triedFirst = (rows) => [...rows.filter((x) => x.i.tries > 0), ...rows.filter((x) => x.i.tries === 0)];
-  const searchBar = `<label class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" /></label>`;
+  const searchBar = `<div class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="text" enterkeyhint="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" />${foodSearch ? '<button class="search-clear" data-clear-search aria-label="Clear search">✕</button>' : ''}</div>`;
   const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
 
   // Category filter row (pastel mini tiles with progress). Combines with the status chips and search.
@@ -597,8 +597,9 @@ function openSettings() {
 
 // ---------------------------------------------------------------- events
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-tab],[data-tab-go],[data-cat],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
+  const t = e.target.closest('[data-tab],[data-tab-go],[data-cat],[data-clear-search],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
   if (!t) return;
+  if ('clearSearch' in t.dataset) { foodSearch = ''; render(); $('#food-search')?.focus(); return; }
   if (t.dataset.tab || t.dataset.tabGo) {
     const next = t.dataset.tab || t.dataset.tabGo;
     tab = next; render(); window.scrollTo({ top: 0 }); return;
@@ -606,7 +607,8 @@ document.addEventListener('click', async (e) => {
   if ('cat' in t.dataset) {
     // Category combines with the status filter; tapping the active category again clears it.
     const c = t.dataset.cat || null;
-    foodCat = foodCat === c ? null : c;
+    if (!c) { foodCat = null; foodSearch = ''; } // "All foods" really means all: also clears the search
+    else foodCat = foodCat === c ? null : c;
     const y = window.scrollY;
     render();
     window.scrollTo(0, y);

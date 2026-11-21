@@ -225,6 +225,7 @@ h3 { font-size: 1rem; font-weight: 700; }
 .search-wrap { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 16px; padding: 0 14px; box-shadow: var(--shadow); }
 .search-wrap > span { font-size: .9rem; opacity: .6; }
 .search { flex: 1; min-width: 0; padding: 12px 0; border: 0; background: transparent; outline: none; }
+.search-clear { flex: none; border: 0; background: var(--surface-2); color: var(--text-2); width: 28px; height: 28px; border-radius: 50%; font-size: .8rem; display: grid; place-items: center; }
 .group-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; margin: 6px 0 2px; }
 
 /* ---------- Sheet ---------- */
