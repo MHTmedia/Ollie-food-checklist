@@ -2,7 +2,7 @@
 // min = earliest age in months to offer (8 = start now).
 // allergen = one of the top-9 allergen groups (FDA/AAP), if any.
 // flavors = taste profile, used to track palate variety.
-// color = for "eat the rainbow" variety tracking.
+// color = tint for the food's icon tile.
 // tip = how to serve it safely at this age.
 
 export const TARGET_TRIES = 15;  // offer up to 15 times before deciding he dislikes it
@@ -222,7 +222,6 @@ export const GUIDE = [
       'Change the preparation (purée, then finger food, then mixed into a favorite) to keep exposures interesting.',
       'Offer the new or disliked food next to a "safe" food he already loves.',
       'Prioritize bitter, sour and spiced flavors. These need the most repetition and widen his palate the most.',
-      'Aim for a rainbow of colors each week.',
       'Only mark a food as "disliked" after 10+ tries, and plan to re-offer it in a month or two.',
     ],
   },

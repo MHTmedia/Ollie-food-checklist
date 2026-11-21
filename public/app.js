@@ -245,8 +245,8 @@ function renderHome() {
   const weekFoods = new Set(week.map((l) => l.foodId));
 
   // Palate coverage this week
-  const flavorHits = new Set(), colorHits = new Set();
-  weekFoods.forEach((id) => { const f = foodById(id); if (!f) return; (f.flavors || []).forEach((x) => flavorHits.add(x)); if (f.color) colorHits.add(f.color); });
+  const flavorHits = new Set();
+  weekFoods.forEach((id) => { const f = foodById(id); if (!f) return; (f.flavors || []).forEach((x) => flavorHits.add(x)); });
 
   // Alerts
   const overdue = groups.filter((g) => g.introduced && !g.reaction && g.daysSince > MAINTAIN_DAYS);
@@ -260,7 +260,7 @@ function renderHome() {
   // Try something new: untried, age-OK, non-allergen-step foods that fill this week's palate gaps
   const missingFlavors = Object.keys(FLAVORS).filter((k) => !flavorHits.has(k));
   const newIdeas = infos.filter((x) => x.i.tries === 0 && ageOk(x.f) && x.f.cat !== 'Allergens')
-    .map((x) => ({ ...x, score: (x.f.flavors || []).filter((fl) => missingFlavors.includes(fl)).length + (colorHits.has(x.f.color) ? 0 : 0.5) }))
+    .map((x) => ({ ...x, score: (x.f.flavors || []).filter((fl) => missingFlavors.includes(fl)).length }))
     .sort((a, b) => b.score - a.score).slice(0, 5);
 
   return `
@@ -290,9 +290,6 @@ function renderHome() {
       <div class="card-head"><h2>Palate this week</h2><span class="muted small">${weekFoods.size} different foods</span></div>
       <div class="field"><span class="label small muted">Flavors</span>
         <div class="chips">${Object.entries(FLAVORS).map(([k, v]) => `<span class="chip ${flavorHits.has(k) ? 'hit' : 'miss'}">${flavorHits.has(k) ? '✓ ' : ''}${v}</span>`).join('')}</div>
-      </div>
-      <div class="field" style="margin-top:12px"><span class="label small muted">Eat the rainbow</span>
-        <div class="rainbow">${Object.entries(COLORS).map(([k, c]) => `<span class="swatch ${colorHits.has(k) ? '' : 'miss'}" style="background:${c}" title="${k}">${colorHits.has(k) ? '✓' : ''}</span>`).join('')}</div>
       </div>
     </section>
 
@@ -555,7 +552,6 @@ function openAddFood(name = '', cat = foodCat) {
       <div class="field"><label for="cf-cat">Category</label><select id="cf-cat">${CATEGORIES.filter((c) => c !== 'Allergens').map((c) => `<option ${c === startCat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
       <div class="field"><label for="cf-all">Contains a top-9 allergen?</label><select id="cf-all"><option value="">No</option>${Object.entries(ALLERGENS).map(([k, v]) => `<option value="${k}">${v.icon} ${v.label}</option>`).join('')}</select></div>
       <div class="field"><span class="label">Flavors (helps the palate tracker)</span><div class="chips" id="cf-flavors">${Object.entries(FLAVORS).map(([k, v]) => `<button type="button" class="chip" data-v="${k}">${v}</button>`).join('')}</div></div>
-      <div class="field"><span class="label">Color (for eat-the-rainbow)</span><div class="rainbow" id="cf-color">${Object.entries(COLORS).map(([k, c]) => `<button type="button" class="swatch" data-v="${k}" style="background:${c}" aria-label="${k}" title="${k}"></button>`).join('')}</div></div>
       <div class="field"><label for="cf-tip">How to serve it (optional)</label><input id="cf-tip" maxlength="300" placeholder="e.g. mashed with a little broth" /></div>
       <button class="btn" type="submit">Add food</button>
     </form>`);
@@ -571,11 +567,6 @@ function openAddFood(name = '', cat = foodCat) {
   $('#cf-name').addEventListener('input', dupeCheck);
   dupeCheck();
   $('#cf-flavors').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.classList.toggle('on'); });
-  $('#cf-color').addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b) return;
-    const on = !b.classList.contains('on');
-    $('#cf-color').querySelectorAll('button').forEach((x) => { x.classList.toggle('on', on && x === b); x.textContent = on && x === b ? '✓' : ''; });
-  });
   $('#food-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (dupeCheck()) return;
@@ -583,7 +574,7 @@ function openAddFood(name = '', cat = foodCat) {
     btn.disabled = true;
     const food = {
       name: $('#cf-name').value.trim(), cat: $('#cf-cat').value, allergen: $('#cf-all').value || null,
-      color: $('#cf-color .on')?.dataset.v || null, tip: $('#cf-tip').value.trim(),
+      tip: $('#cf-tip').value.trim(),
       flavors: [...$('#cf-flavors').querySelectorAll('.on')].map((b) => b.dataset.v),
     };
     const ok = await mutate({ op: 'addFood', food }, `Added ${food.name} ✓`);

@@ -150,9 +150,6 @@ h3 { font-size: 1rem; font-weight: 700; }
 .chip.hit { background: var(--ok-soft); color: var(--green); font-weight: 700; }
 .chip.miss { background: transparent; color: var(--faint); box-shadow: inset 0 0 0 1.5px var(--border); }
 
-.rainbow { display: flex; gap: 8px; flex-wrap: wrap; }
-.rainbow .swatch { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; font-size: .85rem; font-weight: 700; color: #fff; }
-.rainbow .swatch.miss { opacity: .25; }
 
 /* ---------- Food rows (kit: quiz list rows with a pastel illustration tile) ---------- */
 .list { display: grid; }
@@ -232,8 +229,6 @@ h3 { font-size: 1rem; font-weight: 700; }
 .add-hint { text-align: center; color: var(--muted); font-size: .9rem; margin: 0; }
 .link-btn.add { color: var(--teal-ink); font-size: .9rem; }
 .pill.custom { background: var(--tile-blue); color: var(--teal-ink); }
-#cf-color .swatch { border: 0; cursor: pointer; }
-#cf-color .swatch.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--teal); }
 .search-clear { flex: none; border: 0; background: var(--surface-2); color: var(--text-2); width: 28px; height: 28px; border-radius: 50%; font-size: .8rem; display: grid; place-items: center; }
 .group-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; margin: 6px 0 2px; }
 

@@ -4,7 +4,7 @@ A simple shared tracker for Oliver's first foods (8–18 months):
 
 - **Allergen introduction.** Covers all 9 top allergens (peanut, egg, dairy, wheat, soy, each tree nut, fish, shellfish, sesame). It suggests the next one, spaces new allergens about 3 days apart, and flags any introduced allergen not given in 7+ days.
 - **Palate building.** Each food tracks up to 15 tries. A food can only be marked "disliked" after 10+ tries.
-- **Variety.** Tracks weekly coverage of flavors (sweet, sour, bitter, savory, earthy, spiced, mild) and rainbow colors, and suggests new foods to fill the gaps.
+- **Variety.** Tracks weekly coverage of flavors (sweet, sour, bitter, savory, earthy, spiced, mild) and suggests new foods to fill the gaps.
 - **Per-tasting log.** Each entry records the date, liked / OK / refused, reaction (none, mild or severe; severe auto-flags the food "Avoid"), preparation, who fed him, and notes.
 
 ## How it works
