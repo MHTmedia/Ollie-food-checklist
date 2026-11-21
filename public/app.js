@@ -214,22 +214,34 @@ function streakDays() {
   return n;
 }
 
+// Date the child reaches a food's minimum age (YYYY-MM-DD), or null without a birthday.
+function unlockDate(f) {
+  const dob = state.settings.dob;
+  if (!dob || !f.min) return null;
+  const d = parseDate(dob);
+  d.setMonth(d.getMonth() + f.min);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function foodRow(f, extraMeta = '', { hideAllergen = false } = {}) {
   const i = foodInfo(f);
-  const locked = !ageOk(f);
+  // Not age-appropriate yet (and never logged): grayed out, no quick-log, shows when it unlocks.
+  const locked = !ageOk(f) && i.tries === 0;
   const al = f.allergen && !hideAllergen ? `<span class="pill allergen">${ALLERGENS[f.allergen]?.icon || ''} ${esc(ALLERGENS[f.allergen]?.label || f.allergen)}</span>` : '';
-  const age = (locked ? `<span class="pill age">${f.min} mo+</span>` : '') + (f.custom ? '<span class="pill custom">Custom</span>' : '');
-  const triesTxt = i.tries === 0 ? 'Not offered yet'
+  const age = (locked ? `<span class="pill age">🔒 ${f.min} mo+</span>` : '') + (f.custom ? '<span class="pill custom">Custom</span>' : '');
+  const statusPill = locked ? '' : `<span class="pill ${i.status}">${STATUS_LABEL[i.status]}</span>`;
+  const triesTxt = locked ? `Not yet: from ${f.min} months${unlockDate(f) ? ` · ${fmtDate(unlockDate(f))}` : ''}`
+    : i.tries === 0 ? 'Not offered yet'
     : `${i.tries}/${TARGET_TRIES} tries · last ${relDays(i.daysSinceLast)}${i.loved ? ` · ❤️ ${i.loved}` : ''}${i.refused ? ` · ✋ ${i.refused}` : ''}`;
   return `
-    <div class="row${i.tries > 0 ? ' tried' : ''}">
+    <div class="row${i.tries > 0 ? ' tried' : ''}${locked ? ' locked' : ''}">
       <span class="food-ico" style="--c:${COLORS[f.color] || 'var(--muted)'}" aria-hidden="true">${FOOD_ICON[f.id] || CAT_ICON[f.cat] || '🍽️'}</span>
       <button class="row-main" data-open="${esc(f.id)}">
-        <span class="row-title">${esc(f.name)} <span class="pill ${i.status}">${STATUS_LABEL[i.status]}</span> ${al} ${age}</span>
-        <span class="row-meta">${extraMeta || triesTxt}</span>
+        <span class="row-title">${esc(f.name)} ${statusPill} ${al} ${age}</span>
+        <span class="row-meta">${locked ? triesTxt : (extraMeta || triesTxt)}</span>
         ${i.tries > 0 && i.status !== 'likes' ? progressBar(i.tries, i.status === 'learning' && i.tries >= MIN_TRIES_TO_DISMISS) : ''}
       </button>
-      <button class="quick" data-log="${esc(f.id)}" aria-label="Log a tasting of ${esc(f.name)}" ${i.status === 'avoid' ? 'disabled' : ''}>+</button>
+      <button class="quick" data-log="${esc(f.id)}" aria-label="Log a tasting of ${esc(f.name)}" ${i.status === 'avoid' || locked ? 'disabled' : ''}>${locked ? '🔒' : '+'}</button>
     </div>`;
 }
 
@@ -315,7 +327,13 @@ function renderFoods() {
   });
   const cats = [...CATEGORIES, ...new Set(allFoods().map((f) => f.cat).filter((c) => !CATEGORIES.includes(c)))];
   // Tried foods first (as requested), keeping the list's natural order within each group.
-  const triedFirst = (rows) => [...rows.filter((x) => x.i.tries > 0), ...rows.filter((x) => x.i.tries === 0)];
+  // Tried first, then available-to-try, then not-yet-age-appropriate (grayed) at the bottom.
+  const isLocked = (x) => x.i.tries === 0 && !ageOk(x.f);
+  const triedFirst = (rows) => [
+    ...rows.filter((x) => x.i.tries > 0),
+    ...rows.filter((x) => x.i.tries === 0 && !isLocked(x)),
+    ...rows.filter(isLocked),
+  ];
   const searchBar = `<div class="search-row"><div class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="text" enterkeyhint="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" />${foodSearch ? '<button class="search-clear" data-clear-search aria-label="Clear search">✕</button>' : ''}</div><button class="add-food-btn" data-add-food="" aria-label="Add your own food">＋ <span>Add food</span></button></div>`;
   const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
 
