@@ -455,8 +455,7 @@ function renderGuide() {
 function render() {
   if (!state) return;
   const a = ageOn(state.settings.dob);
-  const name = state.settings.childName || 'Oliver';
-  $('#title').textContent = `${name}'s Food Tracker`;
+  $('#title').textContent = 'Ollie Food Tracker';
   $('#age-line').textContent = a ? `${a.months} mo ${a.days} d · ${stageLabel(a.months)}` : 'Set his birthday in Settings';
   const streak = streakDays();
   $('#streak').textContent = `🔥 ${streak}`;

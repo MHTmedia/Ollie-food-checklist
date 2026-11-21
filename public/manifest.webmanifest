@@ -1,6 +1,6 @@
 {
-  "name": "Ollie's Food Tracker",
-  "short_name": "Ollie Foods",
+  "name": "Ollie Food Tracker",
+  "short_name": "Ollie Food Tracker",
   "description": "Track Oliver's first foods: allergen introductions and 10–15 tries for every new flavor.",
   "start_url": "/",
   "scope": "/",

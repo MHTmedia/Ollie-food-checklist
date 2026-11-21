@@ -1,4 +1,4 @@
-# Ollie's Food Tracker
+# Ollie Food Tracker
 
 A simple shared tracker for Oliver's first foods (8–18 months):
 
