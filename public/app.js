@@ -340,18 +340,15 @@ function renderFoods() {
     }).join('')}
   </div>`;
 
-  // All foods, grouped by category (narrowed by category / status / search). Tried foods first.
-  const shown = foodCat ? [foodCat] : cats;
-  const body = shown.map((c) => {
-    const rows = triedFirst(items.filter((x) => x.f.cat === c));
-    if (!rows.length) return '';
-    const fs = allFoods().filter((f) => f.cat === c);
-    const done = fs.filter(tried).length;
-    const narrowed = q || foodFilter !== 'all';
-    return `<section class="card"><div class="card-head"><h2>${CAT_ICON[c] || ''} ${esc(c)}</h2>
-        <span class="muted small">${narrowed ? `${rows.length} shown · ` : ''}${done} of ${fs.length} tried</span></div>
-      <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>`;
-  }).join('');
+  // One flat list (no category grouping): the selected category, or every food. Tried foods first.
+  const scope = foodCat ? allFoods().filter((f) => f.cat === foodCat) : allFoods();
+  const rows = triedFirst(items.filter((x) => !foodCat || x.f.cat === foodCat));
+  const done = scope.filter(tried).length;
+  const narrowed = q || foodFilter !== 'all';
+  const title = foodCat ? `${CAT_ICON[foodCat] || ''} ${esc(foodCat)}` : '🍽️ All foods';
+  const body = rows.length ? `<section class="card"><div class="card-head"><h2>${title}</h2>
+      <span class="muted small">${narrowed ? `${rows.length} shown · ` : ''}${done} of ${scope.length} tried</span></div>
+    <div class="list">${rows.map((x) => foodRow(x.f)).join('')}</div></section>` : '';
 
   return `
     ${searchBar}
