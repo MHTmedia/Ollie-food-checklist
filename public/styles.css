@@ -109,7 +109,7 @@ h3 { font-size: 1rem; font-weight: 700; }
 .tabs button { flex: 1 0 auto; border: 0; background: var(--surface-2); padding: 8px 14px; border-radius: 999px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
 .tabs button.active { background: var(--teal); color: #fff; }
 
-.container { max-width: 760px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+.container { max-width: 760px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 
 /* ---------- Cards ---------- */
 .card { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); min-width: 0; }
@@ -224,7 +224,16 @@ h3 { font-size: 1rem; font-weight: 700; }
 /* Search (kit: white pill with soft shadow) */
 .search-wrap { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 16px; padding: 0 14px; box-shadow: var(--shadow); }
 .search-wrap > span { font-size: .9rem; opacity: .6; }
-.search { flex: 1; min-width: 0; padding: 12px 0; border: 0; background: transparent; outline: none; }
+.search { flex: 1; min-width: 0; width: 100%; padding: 12px 0; border: 0; background: transparent; outline: none; }
+.search-row { display: flex; gap: 8px; align-items: stretch; }
+.search-row .search-wrap { flex: 1; min-width: 0; }
+.add-food-btn { flex: none; border: 0; border-radius: 16px; background: var(--teal); color: #fff; font-weight: 500; padding: 0 14px; font-size: .95rem; box-shadow: var(--shadow); white-space: nowrap; }
+@media (max-width: 380px) { .add-food-btn span { display: none; } .add-food-btn { font-size: 1.3rem; padding: 0 14px; } }
+.add-hint { text-align: center; color: var(--muted); font-size: .9rem; margin: 0; }
+.link-btn.add { color: var(--teal-ink); font-size: .9rem; }
+.pill.custom { background: var(--tile-blue); color: var(--teal-ink); }
+#cf-color .swatch { border: 0; cursor: pointer; }
+#cf-color .swatch.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--teal); }
 .search-clear { flex: none; border: 0; background: var(--surface-2); color: var(--text-2); width: 28px; height: 28px; border-radius: 50%; font-size: .8rem; display: grid; place-items: center; }
 .group-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; margin: 6px 0 2px; }
 

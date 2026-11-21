@@ -218,7 +218,7 @@ function foodRow(f, extraMeta = '', { hideAllergen = false } = {}) {
   const i = foodInfo(f);
   const locked = !ageOk(f);
   const al = f.allergen && !hideAllergen ? `<span class="pill allergen">${ALLERGENS[f.allergen]?.icon || ''} ${esc(ALLERGENS[f.allergen]?.label || f.allergen)}</span>` : '';
-  const age = locked ? `<span class="pill age">${f.min} mo+</span>` : '';
+  const age = (locked ? `<span class="pill age">${f.min} mo+</span>` : '') + (f.custom ? '<span class="pill custom">Custom</span>' : '');
   const triesTxt = i.tries === 0 ? 'Not offered yet'
     : `${i.tries}/${TARGET_TRIES} tries · last ${relDays(i.daysSinceLast)}${i.loved ? ` · ❤️ ${i.loved}` : ''}${i.refused ? ` · ✋ ${i.refused}` : ''}`;
   return `
@@ -319,7 +319,7 @@ function renderFoods() {
   const cats = [...CATEGORIES, ...new Set(allFoods().map((f) => f.cat).filter((c) => !CATEGORIES.includes(c)))];
   // Tried foods first (as requested), keeping the list's natural order within each group.
   const triedFirst = (rows) => [...rows.filter((x) => x.i.tries > 0), ...rows.filter((x) => x.i.tries === 0)];
-  const searchBar = `<div class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="text" enterkeyhint="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" />${foodSearch ? '<button class="search-clear" data-clear-search aria-label="Clear search">✕</button>' : ''}</div>`;
+  const searchBar = `<div class="search-row"><div class="search-wrap"><span aria-hidden="true">🔍</span><input class="search" id="food-search" type="text" enterkeyhint="search" placeholder="Search all foods…" value="${esc(foodSearch)}" aria-label="Search foods" />${foodSearch ? '<button class="search-clear" data-clear-search aria-label="Clear search">✕</button>' : ''}</div><button class="add-food-btn" data-add-food="" aria-label="Add your own food">＋ <span>Add food</span></button></div>`;
   const chips = `<div class="chips">${filters.map(([k, v]) => `<button class="chip ${foodFilter === k ? 'on' : ''}" data-filter="${k}">${v}</button>`).join('')}</div>`;
 
   // Category filter row (pastel mini tiles with progress). Combines with the status chips and search.
@@ -354,7 +354,10 @@ function renderFoods() {
     ${searchBar}
     ${catRow}
     ${chips}
-    ${body || '<div class="card empty">No foods match these filters.</div>'}`;
+    ${body || (q
+      ? `<div class="card empty">No food called “${esc(foodSearch.trim())}” yet.<br><br><button class="btn" data-add-food="${esc(foodSearch.trim())}">＋ Add “${esc(foodSearch.trim())}” as a new food</button></div>`
+      : '<div class="card empty">No foods match these filters.</div>')}
+    ${body ? `<p class="add-hint">Don't see a food? <button class="link-btn add" data-add-food="${esc(foodSearch.trim())}">＋ Add your own</button></p>` : ''}`;
 }
 
 const TONES = ['orange', 'green', 'purple', 'blue', 'yellow'];
@@ -540,6 +543,61 @@ function openFood(id, focusLog = false) {
   if (focusLog) setTimeout(() => $('#log-title')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
 }
 
+// Add your own food. Prefills the name (e.g. from a search with no results) and category.
+function openAddFood(name = '', cat = foodCat) {
+  const startCat = CATEGORIES.includes(cat) && cat !== 'Allergens' ? cat : 'Other';
+  openSheet(`
+    <h2>Add a food</h2>
+    <p class="muted small" style="margin:4px 0 0">It gets a 15-try tracker and shows up in the lists like any other food.</p>
+    <form class="form" id="food-form">
+      <div class="field"><label for="cf-name">Name</label><input id="cf-name" required maxlength="60" value="${esc(name)}" placeholder="e.g. Grandma's congee" autofocus /></div>
+      <p class="small" id="cf-dupe" style="color:var(--warn);margin:-6px 0 0" hidden></p>
+      <div class="field"><label for="cf-cat">Category</label><select id="cf-cat">${CATEGORIES.filter((c) => c !== 'Allergens').map((c) => `<option ${c === startCat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label for="cf-all">Contains a top-9 allergen?</label><select id="cf-all"><option value="">No</option>${Object.entries(ALLERGENS).map(([k, v]) => `<option value="${k}">${v.icon} ${v.label}</option>`).join('')}</select></div>
+      <div class="field"><span class="label">Flavors (helps the palate tracker)</span><div class="chips" id="cf-flavors">${Object.entries(FLAVORS).map(([k, v]) => `<button type="button" class="chip" data-v="${k}">${v}</button>`).join('')}</div></div>
+      <div class="field"><span class="label">Color (for eat-the-rainbow)</span><div class="rainbow" id="cf-color">${Object.entries(COLORS).map(([k, c]) => `<button type="button" class="swatch" data-v="${k}" style="background:${c}" aria-label="${k}" title="${k}"></button>`).join('')}</div></div>
+      <div class="field"><label for="cf-tip">How to serve it (optional)</label><input id="cf-tip" maxlength="300" placeholder="e.g. mashed with a little broth" /></div>
+      <button class="btn" type="submit">Add food</button>
+    </form>`);
+
+  const dupeCheck = () => {
+    const n = $('#cf-name').value.trim().toLowerCase();
+    const match = n && allFoods().find((f) => f.name.toLowerCase() === n);
+    const el = $('#cf-dupe');
+    el.hidden = !match;
+    if (match) el.innerHTML = `“${esc(match.name)}” is already on the list. <a href="#" data-open="${esc(match.id)}">Open it</a>`;
+    return match;
+  };
+  $('#cf-name').addEventListener('input', dupeCheck);
+  dupeCheck();
+  $('#cf-flavors').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.classList.toggle('on'); });
+  $('#cf-color').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const on = !b.classList.contains('on');
+    $('#cf-color').querySelectorAll('button').forEach((x) => { x.classList.toggle('on', on && x === b); x.textContent = on && x === b ? '✓' : ''; });
+  });
+  $('#food-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (dupeCheck()) return;
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true;
+    const food = {
+      name: $('#cf-name').value.trim(), cat: $('#cf-cat').value, allergen: $('#cf-all').value || null,
+      color: $('#cf-color .on')?.dataset.v || null, tip: $('#cf-tip').value.trim(),
+      flavors: [...$('#cf-flavors').querySelectorAll('.on')].map((b) => b.dataset.v),
+    };
+    const ok = await mutate({ op: 'addFood', food }, `Added ${food.name} ✓`);
+    btn.disabled = false;
+    if (ok) {
+      foodSearch = '';
+      const added = [...state.customFoods].reverse().find((f) => f.name === food.name);
+      if (tab === 'foods') render();
+      if (added) openFood(added.id, true); // jump straight to logging the first taste
+      else closeSheet();
+    }
+  });
+}
+
 function openSettings() {
   const s = state.settings;
   openSheet(`
@@ -551,16 +609,10 @@ function openSettings() {
       <button class="btn" type="submit">Save settings</button>
     </form>
 
-    <form class="form" id="food-form">
-      <h3>Add a custom food</h3>
-      <div class="field"><label for="cf-name">Name</label><input id="cf-name" required placeholder="e.g. Grandma's congee" /></div>
-      <div class="field"><label for="cf-cat">Category</label><select id="cf-cat">${CATEGORIES.map((c) => `<option ${c === 'Other' ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-      <div class="field"><label for="cf-all">Contains allergen?</label><select id="cf-all"><option value="">None</option>${Object.entries(ALLERGENS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select></div>
-      <div class="field"><span class="label">Flavors</span><div class="chips" id="cf-flavors">${Object.entries(FLAVORS).map(([k, v]) => `<button type="button" class="chip" data-v="${k}">${v}</button>`).join('')}</div></div>
-      <div class="field"><label for="cf-color">Color</label><select id="cf-color"><option value="">—</option>${Object.keys(COLORS).map((c) => `<option>${c}</option>`).join('')}</select></div>
-      <div class="field"><label for="cf-tip">Serving tip (optional)</label><input id="cf-tip" /></div>
-      <button class="btn secondary" type="submit">Add food</button>
-    </form>
+    <div class="form">
+      <h3>Your own foods</h3>
+      <button class="btn secondary" data-add-food="">＋ Add a food</button>
+    </div>
 
     <div class="form">
       <h3>This device</h3>
@@ -576,15 +628,6 @@ function openSettings() {
       caregivers: $('#s-care').value.split(',').map((x) => x.trim()).filter(Boolean) } }, 'Settings saved ✓');
     if (ok) closeSheet();
   });
-  $('#cf-flavors').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.classList.toggle('on'); });
-  $('#food-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const food = { name: $('#cf-name').value, cat: $('#cf-cat').value, allergen: $('#cf-all').value || null,
-      color: $('#cf-color').value || null, tip: $('#cf-tip').value,
-      flavors: [...$('#cf-flavors').querySelectorAll('.on')].map((b) => b.dataset.v) };
-    const ok = await mutate({ op: 'addFood', food }, `Added ${food.name} ✓`);
-    if (ok) closeSheet();
-  });
   $('#export-btn').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `ollie-foods-${todayStr()}.json` });
@@ -594,8 +637,9 @@ function openSettings() {
 
 // ---------------------------------------------------------------- events
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-tab],[data-tab-go],[data-cat],[data-clear-search],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
+  const t = e.target.closest('[data-tab],[data-tab-go],[data-cat],[data-clear-search],[data-add-food],[data-open],[data-log],[data-filter],[data-del-log],[data-flag],[data-remove-food]');
   if (!t) return;
+  if ('addFood' in t.dataset) { e.preventDefault(); openAddFood(t.dataset.addFood || ''); return; }
   if ('clearSearch' in t.dataset) { foodSearch = ''; render(); $('#food-search')?.focus(); return; }
   if (t.dataset.tab || t.dataset.tabGo) {
     const next = t.dataset.tab || t.dataset.tabGo;
