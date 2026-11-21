@@ -172,6 +172,47 @@ h3 { font-size: 1rem; font-weight: 700; }
   background: var(--green); color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center;
   box-shadow: 0 0 0 2px var(--surface);
 }
+/* ---------- How-to-serve guide: plates along an age timeline ---------- */
+.serve { margin-top: 14px; background: var(--surface-2); border-radius: 20px; padding: 14px 12px 12px; }
+.serve-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.serve-head h3 { font-size: .98rem; }
+.pill.choke { background: var(--tile-red); color: var(--danger); text-transform: none; }
+.serve-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; position: relative; align-items: start; }
+/* the dotted timeline running behind the plates */
+.serve-track::before {
+  content: ''; position: absolute; left: 16%; right: 16%; top: calc(8px + 54px + 6px + 46px); border-top: 2px dashed color-mix(in srgb, var(--c) 55%, var(--border)); z-index: 0;
+}
+.serve-stop { position: relative; z-index: 1; display: grid; justify-items: center; text-align: center; gap: 6px; padding: 8px 4px 10px; border-radius: 16px; }
+.serve-stop.now { background: var(--surface); box-shadow: 0 0 0 2px var(--teal), var(--shadow); }
+.serve-age { display: grid; justify-items: center; line-height: 1.15; height: 54px; align-content: end; }
+.serve-stop:not(.now) .now-tag { visibility: hidden; }
+.serve-age b { font-size: .88rem; color: var(--text); }
+.serve-age small { font-size: .7rem; color: var(--muted); }
+.now-tag { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--teal); color: #fff; border-radius: 999px; padding: 2px 7px; margin-bottom: 3px; }
+.plate-svg { width: 92px; max-width: 100%; height: auto; display: block; }
+.plate-svg .plate { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+.serve-stop.now .plate-svg .plate { fill: #fff; }
+.plate-svg .plate-rim { fill: none; stroke: color-mix(in srgb, var(--c) 18%, var(--border)); stroke-width: 1; }
+.plate-svg .f { fill: var(--c); stroke: color-mix(in srgb, var(--c) 62%, #000); stroke-width: 1.2; stroke-linejoin: round; }
+.plate-svg .f2 { fill: color-mix(in srgb, var(--c) 55%, #fff); }
+.plate-svg .line { fill: none; stroke: color-mix(in srgb, var(--c) 55%, #fff); stroke-width: 1.6; stroke-linecap: round; }
+.plate-svg .shred { fill: none; stroke: var(--c); stroke-width: 2.2; stroke-linecap: round; }
+.plate-svg .shred.thick { stroke-width: 3; }
+.plate-svg .bread { fill: #e2b77c; stroke: #b98647; stroke-width: 1.2; }
+.plate-svg .stalk { fill: color-mix(in srgb, var(--c) 70%, #fff); stroke: color-mix(in srgb, var(--c) 62%, #000); stroke-width: 1; }
+.plate-svg .spoon { fill: #e6e9ec; stroke: #b9c0c6; stroke-width: 1.2; }
+.plate-svg .handle { fill: #cfd5da; }
+.plate-svg .bowlfill { fill: #f4efe6; stroke: #ded5c4; stroke-width: 1.2; }
+.plate-svg .core { fill: #f3e3a6; }
+.plate-svg .cupbody { fill: #eef5f9; stroke: #b9c9d3; stroke-width: 1.4; }
+.plate-svg .lockbody { fill: #c9cfd4; }
+.plate-svg .lockloop { fill: none; stroke: #c9cfd4; stroke-width: 4; }
+.serve-text { display: grid; gap: 2px; font-size: .76rem; color: var(--text-2); line-height: 1.25; }
+.serve-text b { font-size: .8rem; color: var(--text); font-weight: 500; }
+.serve-text em { font-style: normal; color: var(--teal-ink); font-weight: 500; margin-top: 2px; }
+.serve-stop.locked { opacity: .55; }
+.serve-stop.locked .serve-text b { color: var(--muted); }
+
 /* Not age-appropriate yet: grayed out */
 .row.locked .food-ico { filter: grayscale(1); opacity: .45; background: var(--surface-2); }
 .row.locked .row-title { color: var(--faint); }

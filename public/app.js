@@ -2,6 +2,7 @@ import {
   FOODS, ALLERGENS, FLAVORS, COLORS, CATEGORIES, PREP_OPTIONS, GUIDE,
   TARGET_TRIES, MIN_TRIES_TO_DISMISS,
 } from './foods.js';
+import { renderServingGuide } from './serving.js';
 
 // ---------------------------------------------------------------- state
 let state = null;
@@ -492,7 +493,8 @@ function openFood(id, focusLog = false) {
     <h2>${esc(f.name)}</h2>
     <p class="muted small" style="margin:4px 0 0">${esc(f.cat)}${f.allergen ? ` · ${ALLERGENS[f.allergen].icon} ${esc(ALLERGENS[f.allergen].label)} allergen` : ''} · ${(f.flavors || []).map((x) => FLAVORS[x]).join(', ')}</p>
     ${!ageOk(f) ? `<div class="callout warn" style="margin-top:10px">Recommended from <b>${f.min} months</b>.</div>` : ''}
-    ${f.tip ? `<div class="callout info" style="margin-top:10px">${esc(f.tip)}</div>` : ''}
+    ${renderServingGuide(f, ageMonths(), state.settings.childName || 'Oliver')}
+    ${f.tip ? `<div class="callout info" style="margin-top:10px">💡 ${esc(f.tip)}</div>` : ''}
     <div style="margin-top:12px;display:grid;gap:6px">
       <div class="row-title"><span class="pill ${i.status}">${STATUS_LABEL[i.status]}</span> <span class="small muted">${i.tries}/${TARGET_TRIES} tries · ❤️ ${i.loved} · 🙂 ${i.ok} · ✋ ${i.refused}</span></div>
       ${progressBar(i.tries)}
